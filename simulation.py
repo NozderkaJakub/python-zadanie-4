@@ -3,7 +3,6 @@ from meadow import Meadow
 import json
 from writer import Writer
 from printer import Printer
-import logger
 
 
 class Simulation:
@@ -19,43 +18,36 @@ class Simulation:
         self.turn_result = {}
         self.results = []
 
-    def simulate(self):
-        logger.log_debug(__name__, "simulate", "brak", "brak")
-
+    def step(self):
         self.turn = 0
-        while (self.turn < self.turns and self.is_any_alive_sheep()):
-            self.let_flock_flee()
-            self.calculate_distances_between_wolf_and_flock()
-            nearest_sheep = self.get_nearest_alive_sheep()
-            distance_from_nearest_sheep = nearest_sheep[1]
-            if (distance_from_nearest_sheep < self.wolf.move_dist):
-                self.let_wolf_eat(nearest_sheep[0])
-                self.alive_sheep_amount = self.get_alive_sheep_amount()
-            else:
-                self.let_wolf_chase(nearest_sheep)
+        self.let_flock_flee()
+        self.calculate_distances_between_wolf_and_flock()
+        print(self.wolf.pos_x, self.wolf.pos_y)
+        print(self.get_alive_sheep_amount())
+        nearest_sheep = self.get_nearest_alive_sheep()
+        distance_from_nearest_sheep = nearest_sheep[1]
+        if (distance_from_nearest_sheep < self.wolf.move_dist):
+            self.let_wolf_eat(nearest_sheep[0])
+            self.alive_sheep_amount = self.get_alive_sheep_amount()
+        else:
+            self.let_wolf_chase(nearest_sheep)
 
-            self.write_turn_result()
-            self.results.append(self.turn_result)
+        self.write_turn_result()
+        self.results.append(self.turn_result)
 
-            self.turn += 1
+        self.turn += 1
 
     def let_flock_flee(self):
-        logger.log_debug(__name__, "let_flock_flee", "brak", "brak")
         for id in range(0, len(self.flock)):
             self.flock[id].move()
 
     def let_wolf_eat(self, nearest_sheep):
-        logger.log_debug(__name__, "let_wolf_eat", str(nearest_sheep), "brak")
         self.wolf.eat(nearest_sheep)
 
     def let_wolf_chase(self, nearest_sheep):
-        logger.log_debug(__name__, "let_wolf_chase",
-                         str(nearest_sheep), "brak")
         self.wolf.chase(nearest_sheep)
 
     def calculate_distances_between_wolf_and_flock(self):
-        logger.log_debug(
-            __name__, "calculate_distances_between_wolf_and_flock", "brak", "brak")
         self.distances = []
         for id in range(0, len(self.flock)):
             distance = 0.0
@@ -66,19 +58,15 @@ class Simulation:
             self.distances.append([self.flock[id], distance])
 
     def get_nearest_alive_sheep(self):
-        logger.log_debug(__name__, "get_nearest_alive_sheep", "brak", "brak")
         alive_sheep = [sheep for sheep in self.distances if sheep[0].is_alive]
         return min(alive_sheep, key=lambda x: x[1])
 
     def is_any_alive_sheep(self):
         result = False if not self.get_alive_sheep_amount() else True
-        logger.log_debug(__name__, "is_any_alive_sheep", "brak", str(result))
         return result
 
     def get_alive_sheep_amount(self):
         alive_sheep_amount = len(self.flock) - self.get_eaten_sheep_amount()
-        logger.log_debug(__name__, "get_alive_sheep_amount",
-                         "brak", str(alive_sheep_amount))
         return alive_sheep_amount
 
     def get_eaten_sheep_amount(self):
@@ -86,11 +74,9 @@ class Simulation:
         for sheep in self.flock:
             if not sheep.is_alive:
                 cnt += 1
-        logger.log_debug(__name__, "get_eaten_sheep_amount", "brak", str(cnt))
         return cnt
 
     def write_turn_result(self):
-        logger.log_debug(__name__, "write_turn_result", "brak", "brak")
         self.turn_result = {
             "turn_no": self.turn,
             "wolf_pos": (self.wolf.pos_x, self.wolf.pos_y),

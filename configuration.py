@@ -9,7 +9,7 @@ config = {
     "wolf_move_dist": 1.0,
     "dir_to_save": "",
     "log": logging.WARNING,
-    "rounds": 50,
+    "rounds": 10,
     "sheep": 15,
     "wait": False
 }

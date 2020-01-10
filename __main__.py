@@ -12,7 +12,7 @@ def simulate():
 
     simulation = Simulation(flock_size=cfg.config["sheep"], sheep_move_dist=cfg.config["sheep_move_dist"],
                             wolf_move_dist=cfg.config["wolf_move_dist"], init_pos_limit=cfg.config["init_pos_limit"],
-                            turns=cfg.config["rounds"])
+                            turns=10)
     simulation.simulate()
 
     Printer.print_simulation_results(
@@ -30,5 +30,5 @@ try:
 except ValueError as message:
     exc.handle_exceptions(message)
 else:
-    simulate()
+    # simulate()
     window = Window()
