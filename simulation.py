@@ -9,6 +9,7 @@ class Simulation:
 
     def __init__(self, flock_size=15, sheep_move_dist=0.5, wolf_move_dist=1.0, init_pos_limit=10.0, turns=50):
         self.meadow = Meadow()
+        self.init_pos_limit=init_pos_limit
         self.wolf = self.meadow.create_wolf(wolf_move_dist)
         self.flock = self.meadow.create_flock(
             flock_size, sheep_move_dist, init_pos_limit)
@@ -17,13 +18,13 @@ class Simulation:
         self.distances = []
         self.turn_result = {}
         self.results = []
+        self.turn = 0
 
     def step(self):
-        self.turn = 0
         self.let_flock_flee()
         self.calculate_distances_between_wolf_and_flock()
-        print(self.wolf.pos_x, self.wolf.pos_y)
-        print(self.get_alive_sheep_amount())
+        # print(self.wolf.pos_x, self.wolf.pos_y)
+        # print(self.get_alive_sheep_amount())
         nearest_sheep = self.get_nearest_alive_sheep()
         distance_from_nearest_sheep = nearest_sheep[1]
         if (distance_from_nearest_sheep < self.wolf.move_dist):
@@ -32,10 +33,11 @@ class Simulation:
         else:
             self.let_wolf_chase(nearest_sheep)
 
+        self.turn += 1
         self.write_turn_result()
+        print(self.turn_result)
         self.results.append(self.turn_result)
 
-        self.turn += 1
 
     def let_flock_flee(self):
         for id in range(0, len(self.flock)):
@@ -80,8 +82,11 @@ class Simulation:
         self.turn_result = {
             "turn_no": self.turn,
             "wolf_pos": (self.wolf.pos_x, self.wolf.pos_y),
-            "alive_sheep_amount": self.get_alive_sheep_amount(),
-            "sheep_positions": []
+            "sheep_positions": [],
+            "rounds": self.turns,
+            "init_pos_limit": self.init_pos_limit,
+            "sheep_move_dist": self.flock[0].move_dist,
+            "wolf_move_dist": self.wolf.move_dist
         }
         for i in range(len(self.flock)):
             self.turn_result["sheep_positions"].append(

@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import filedialog
 from simulation import Simulation
 import configuration as cfg
 from printer import Printer
@@ -12,7 +13,7 @@ class Window():
         self.sheep_amount_label.config(text='Liczba żywych owiec: ' + str(self.simulation.get_alive_sheep_amount()))
 
     def simulate(self):
-        if self.turn <= self.simulation.turns:
+        if self.turn <= self.simulation.turns-1:
             self.simulation.step()
             self.turn += 1
             self.update_sheep_amount()
@@ -25,6 +26,15 @@ class Window():
                             turns=cfg.config['rounds'])
         self.turn = 0
         self.update_sheep_amount()
+
+    def file_save(self):
+        f=filedialog.asksaveasfile(mode='w', defaultextension=".txt")
+        if f is None:
+            return
+        text2save = str(self.simulation.turn_result)
+        f.write(text2save)
+        f.write('no i chuj')
+        f.close()
 
     def __init__(self):
         self.window = Tk()
@@ -39,7 +49,7 @@ class Window():
         file_menu = Menu(menu, tearoff=0)
         file_menu.add_command(label='Open')
         file_menu.add_separator()
-        file_menu.add_command(label='Save')
+        file_menu.add_command(label='Save', command=self.file_save)
         file_menu.add_separator()
         file_menu.add_command(label='Quit', command=self.quit)
         settings_menu = Menu(menu, tearoff=0)
