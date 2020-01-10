@@ -86,7 +86,9 @@ class Simulation:
             "rounds": self.turns,
             "init_pos_limit": self.init_pos_limit,
             "sheep_move_dist": self.flock[0].move_dist,
-            "wolf_move_dist": self.wolf.move_dist
+            "wolf_move_dist": self.wolf.move_dist,
+            "turns": self.turns,
+            "sheeps": len(self.flock)
         }
         for i in range(len(self.flock)):
             self.turn_result["sheep_positions"].append(
