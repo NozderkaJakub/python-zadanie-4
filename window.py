@@ -8,10 +8,14 @@ class Window():
     def quit(self):
         self.window.destroy()
 
+    def update_sheep_amount(self):
+        self.sheep_amount_label.config(text='Liczba żywych owiec: ' + str(self.simulation.get_alive_sheep_amount()))
+
     def simulate(self):
         if self.turn <= self.simulation.turns:
             self.simulation.step()
             self.turn += 1
+            self.update_sheep_amount()
         else:
             print('Osiągnięto końcową liczbę rund')
 
@@ -20,6 +24,7 @@ class Window():
                             wolf_move_dist=cfg.config['wolf_move_dist'], init_pos_limit=cfg.config['init_pos_limit'],
                             turns=cfg.config['rounds'])
         self.turn = 0
+        self.update_sheep_amount()
 
     def __init__(self):
         self.window = Tk()
@@ -41,8 +46,13 @@ class Window():
         menu.add_cascade(label='File', menu=file_menu)
         menu.add_cascade(label='Settings', menu=settings_menu)
         self.window.config(menu=menu)
+        self.sheep_amount_label = Label(self.window)
+        self.update_sheep_amount()
+        self.sheep_amount_label.pack()
         step_button = Button(self.window, text='Step', command=self.simulate)
         step_button.pack()
         reset_button = Button(self.window, text='Reset', command=self.reset)
         reset_button.pack()
+
+        
         self.window.mainloop()
