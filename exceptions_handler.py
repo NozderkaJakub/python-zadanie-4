@@ -38,8 +38,6 @@ def get_non_positive_variables():
         non_positive_variables.append("wolf_move_dist")
     if configuration.config["rounds"] <= 0.0:
         non_positive_variables.append("rounds")
-    if configuration.config["sheep"] <= 0.0:
-        non_positive_variables.append("sheep")
     return non_positive_variables
 
 

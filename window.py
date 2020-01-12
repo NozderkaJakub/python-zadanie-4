@@ -1,12 +1,63 @@
 from tkinter import *
 from tkinter import filedialog
+from tkinter import messagebox
+from tkcolorpicker import askcolor
 import json
 from simulation import Simulation
 import configuration as cfg
 import numpy as np
 from animals import Wolf
 
+
 class Window():
+    def choose_sheep_color(self):
+        try:
+            _, colorStr = askcolor(title="Choose color")
+        except TclError:
+            colorStr = None
+        if colorStr is not None:
+            cfg.config['sheep_color'] = colorStr
+        self.update_animals()
+
+    def choose_grass_color(self):
+        try:
+            _, colorStr = askcolor(title="Choose color")
+        except TclError:
+            colorStr = None
+        if colorStr is not None:
+            cfg.config['grass_color'] = colorStr
+        self.update_animals()
+
+    def choose_wolf_color(self):
+        try:
+            _, colorStr = askcolor(title="Choose color")
+        except TclError:
+            colorStr = None
+        if colorStr is not None:
+            cfg.config['wolf_color'] = colorStr
+        self.update_animals()        
+
+    def settings(self):
+        win = Toplevel()
+        win.wm_title("Settings")
+        sheep_color = Button(win, text='Sheep color', command=self.choose_sheep_color)
+        sheep_color.pack()
+        sheep_color = Button(win, text='Grass color', command=self.choose_grass_color)
+        sheep_color.pack()
+        sheep_color = Button(win, text='Wolf color', command=self.choose_wolf_color)
+        sheep_color.pack()
+
+    def sheep_color(self):
+        win = Toplevel()
+        win.wm_title("Sheep color")
+
+    def grass_color(self):
+        win = Toplevel()
+        win.wm_title("Grass color")
+
+    def wolf_color(self):
+        win = Toplevel()
+        win.wm_title("Wolf color")
 
     def quit(self):
         self.window.destroy()
@@ -15,27 +66,25 @@ class Window():
         self.sheep_amount_label.config(text='Liczba żywych owiec: ' + str(self.simulation.get_alive_sheep_amount()))
 
     def simulate(self):
-        if self.turn <= self.simulation.turns-1:
+        if self.turn <= cfg.config['rounds']-1 and len(self.simulation.flock) > 0:
             self.simulation.go_step()
             self.turn += 1
             self.update_sheep_amount()
             self.update_animals()
+        elif len(self.simulation.flock) < 1:
+            messagebox.showinfo('Brak owiec', 'Dodaj najpierw owce')  
         else:
             print('Osiągnięto końcową liczbę rund')
 
     def reset(self):
-        self.simulation = Simulation(flock_size=cfg.config['sheep'], sheep_move_dist=cfg.config['sheep_move_dist'],
-                            wolf_move_dist=cfg.config['wolf_move_dist'], init_pos_limit=cfg.config['init_pos_limit'],
-                            turns=cfg.config['rounds'])
+        self.simulation = Simulation(sheep_move_dist=cfg.config['sheep_move_dist'], wolf_move_dist=cfg.config['wolf_move_dist'])
         self.clear_canvas()
         self.add_wolf()
         self.turn = 0
         self.update_sheep_amount()
 
     def restore_game(self, result):
-        self.simulation = Simulation(flock_size=result['sheeps'], sheep_move_dist=result['sheep_move_dist'],
-                            wolf_move_dist=result['wolf_move_dist'], init_pos_limit=result['init_pos_limit'],
-                            turns=result['turns'])
+        self.simulation = Simulation(sheep_move_dist=result['sheep_move_dist'], wolf_move_dist=result['wolf_move_dist'])
         self.simulation.turn = result['turn_no']
         self.simulation.wolf.pos_x = result['wolf_pos'][0]
         self.simulation.wolf.pos_y = result['wolf_pos'][1]
@@ -65,13 +114,14 @@ class Window():
         self.restore_game(result)
 
     def clear_canvas(self):
-        self.canvas.create_rectangle(0,0,self.canvas_side,self.canvas_side, fill='green')
+        self.canvas.create_rectangle(0, 0, cfg.config['canvas_side'], cfg.config['canvas_side'], fill=cfg.config['grass_color'])
 
     def update_animals(self):
         self.clear_canvas()
         for i in range(len(self.simulation.flock)):
-            self.paint_animal(self.simulation.flock[i].pos_x, self.simulation.flock[i].pos_y, 'blue')
-        self.paint_animal(self.simulation.wolf.pos_x, self.simulation.wolf.pos_y, 'red')
+            if self.simulation.flock[i].is_alive:
+                self.paint_animal(self.simulation.flock[i].pos_x, self.simulation.flock[i].pos_y, cfg.config['sheep_color'])
+        self.paint_animal(self.simulation.wolf.pos_x, self.simulation.wolf.pos_y, cfg.config['wolf_color'])
         
     def update_wolf(self, event):
         self.clear_canvas()
@@ -90,29 +140,22 @@ class Window():
 
     def add_sheep(self, event):
         self.simulation.add_sheep(event.x, event.y)
-        self.paint_animal(event.x, event.y, 'blue')
+        self.paint_animal(event.x, event.y, cfg.config['sheep_color'])
         self.update_sheep_amount()
 
-    # def add_sheep(self, event):
-    #     self.paint_dot(event, 'blue')
-
     def add_wolf(self):
-        self.simulation.wolf = Wolf(cfg.config['wolf_move_dist']*self.step, self.canvas_side/2, self.canvas_side/2)
-        self.paint_animal(self.canvas_side/2, self.canvas_side/2, 'red')
+        self.simulation.wolf = Wolf(cfg.config['wolf_move_dist']*self.step, cfg.config['canvas_side']/2, cfg.config['canvas_side']/2)
+        self.paint_animal(cfg.config['canvas_side']/2, cfg.config['canvas_side']/2, cfg.config['wolf_color'])
 
 
-    def __init__(self):
-        self.window = Tk()        
-        self.window.title('Wilk i łowce')
-        self.window.geometry('1920x1080')
+    def config(self):
         self.turn = 0
         self.dot_size = 10
-        self.canvas_side = 810
-        self.step = self.canvas_side / (1.5 * cfg.config['init_pos_limit'])
-        self.simulation = Simulation(flock_size=cfg.config['sheep'], sheep_move_dist=cfg.config['sheep_move_dist'],
-                            wolf_move_dist=cfg.config['wolf_move_dist'], init_pos_limit=cfg.config['init_pos_limit'],
-                            turns=cfg.config['rounds'], step=self.step)
-
+        self.window.title(cfg.config['title'])
+        self.window.geometry(cfg.config['resolution'])
+        self.step = cfg.config['canvas_side'] / (1.5 * cfg.config['init_pos_limit'])
+        self.simulation = Simulation(sheep_move_dist=cfg.config['sheep_move_dist'],
+                            wolf_move_dist=cfg.config['wolf_move_dist'], step=self.step)
         menu = Menu(self.window)
         file_menu = Menu(menu, tearoff=0)
         file_menu.add_command(label='Open', command=self.file_open)
@@ -123,19 +166,21 @@ class Window():
         settings_menu = Menu(menu, tearoff=0)
         menu.add_cascade(label='File', menu=file_menu)
         menu.add_cascade(label='Settings', menu=settings_menu)
-
         self.window.config(menu=menu)
         self.sheep_amount_label = Label(self.window)
         self.update_sheep_amount()
         self.sheep_amount_label.pack()
-        self.canvas = Canvas(self.window, width=self.canvas_side, height=self.canvas_side)
+        self.canvas = Canvas(self.window, width=cfg.config['canvas_side'], height=cfg.config['canvas_side'])
         self.canvas_setup()
         self.add_wolf()
-
         step_button = Button(self.window, text='Step', command=self.simulate)
         step_button.pack()
         reset_button = Button(self.window, text='Reset', command=self.reset)
         reset_button.pack()
+        button = Button(self.window, text='Settings', command=self.settings)
+        button.pack()
 
-        
+    def __init__(self):
+        self.window = Tk()
+        self.config()
         self.window.mainloop()

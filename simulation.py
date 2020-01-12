@@ -7,13 +7,10 @@ import configuration as cfg
 
 class Simulation:
 
-    def __init__(self, flock_size=15, sheep_move_dist=0.5, wolf_move_dist=1.0, init_pos_limit=10.0, turns=50, step=54):
-        self.init_pos_limit = init_pos_limit
+    def __init__(self, sheep_move_dist=0.5, wolf_move_dist=1.0, step=54):
         self.step = step
         self.wolf = Wolf(wolf_move_dist * self.step)
         self.flock = []
-        self.alive_sheep_amount = flock_size
-        self.turns = turns
         self.distances = []
         self.turn_result = {}
         self.results = []
@@ -87,11 +84,8 @@ class Simulation:
             "turn_no": self.turn,
             "wolf_pos": (self.wolf.pos_x, self.wolf.pos_y),
             "sheep_positions": [],
-            "rounds": self.turns,
-            "init_pos_limit": self.init_pos_limit,
             "sheep_move_dist": self.flock[0].move_dist,
             "wolf_move_dist": self.wolf.move_dist,
-            "turns": self.turns,
             "sheeps": len(self.flock)
         }
         for i in range(len(self.flock)):
