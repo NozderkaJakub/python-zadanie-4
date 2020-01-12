@@ -1,7 +1,6 @@
 import argparse
 import configparser
 import logging
-from writer import Writer
 
 config = {
     "init_pos_limit": 10.0,

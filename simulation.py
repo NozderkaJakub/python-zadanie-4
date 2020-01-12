@@ -1,18 +1,17 @@
 import math
-from meadow import Meadow
+from animals import Wolf
+from animals import Sheep
 import json
-from writer import Writer
-from printer import Printer
+import configuration as cfg
 
 
 class Simulation:
 
-    def __init__(self, flock_size=15, sheep_move_dist=0.5, wolf_move_dist=1.0, init_pos_limit=10.0, turns=50):
-        self.meadow = Meadow()
-        self.init_pos_limit=init_pos_limit
-        self.wolf = self.meadow.create_wolf(wolf_move_dist)
-        self.flock = self.meadow.create_flock(
-            flock_size, sheep_move_dist, init_pos_limit)
+    def __init__(self, flock_size=15, sheep_move_dist=0.5, wolf_move_dist=1.0, init_pos_limit=10.0, turns=50, step=54):
+        self.init_pos_limit = init_pos_limit
+        self.step = step
+        self.wolf = Wolf(wolf_move_dist * self.step)
+        self.flock = []
         self.alive_sheep_amount = flock_size
         self.turns = turns
         self.distances = []
@@ -20,11 +19,17 @@ class Simulation:
         self.results = []
         self.turn = 0
 
-    def step(self):
+    def add_sheep(self, x, y):
+        sheep = Sheep(
+                cfg.config["sheep_move_dist"] * self.step,
+                len(self.flock),
+                x,
+                y)
+        self.flock.append(sheep)
+
+    def go_step(self):
         self.let_flock_flee()
         self.calculate_distances_between_wolf_and_flock()
-        # print(self.wolf.pos_x, self.wolf.pos_y)
-        # print(self.get_alive_sheep_amount())
         nearest_sheep = self.get_nearest_alive_sheep()
         distance_from_nearest_sheep = nearest_sheep[1]
         if (distance_from_nearest_sheep < self.wolf.move_dist):
@@ -35,7 +40,6 @@ class Simulation:
 
         self.turn += 1
         self.write_turn_result()
-        print(self.turn_result)
         self.results.append(self.turn_result)
 
 
