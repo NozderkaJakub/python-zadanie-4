@@ -60,6 +60,22 @@ class Window():
         result = json.loads(f.read())
         self.restore_game(result)
 
+    def canvas_setup(self):
+        self.canvas.pack()
+        self.canvas.create_rectangle(0,0,800,750, fill="green")
+        self.canvas.create_oval(150,100,150,100, width=3, fill="blue")
+        self.canvas.bind("<Button-1>", self.add_sheep)
+        self.canvas.bind("<Button-3>", self.add_wolf)
+
+    def paint_dot(self, event, color):
+        self.canvas.create_oval(event.x, event.y, event.x, event.y, width=10, fill=color)
+
+    def add_sheep(self, event):
+        self.paint_dot(event, 'blue')
+
+    def add_wolf(self, event):
+        self.paint_dot(event, "red")
+
     def __init__(self):
         self.window = Tk()
         self.simulation = Simulation(flock_size=cfg.config['sheep'], sheep_move_dist=cfg.config['sheep_move_dist'],
@@ -84,6 +100,9 @@ class Window():
         self.sheep_amount_label = Label(self.window)
         self.update_sheep_amount()
         self.sheep_amount_label.pack()
+        self.canvas = Canvas(self.window, width=500, height=400)
+        self.canvas_setup()
+
         step_button = Button(self.window, text='Step', command=self.simulate)
         step_button.pack()
         reset_button = Button(self.window, text='Reset', command=self.reset)
