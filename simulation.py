@@ -7,8 +7,9 @@ import configuration as cfg
 
 class Simulation:
 
-    def __init__(self, sheep_move_dist=0.5, wolf_move_dist=1.0, step=54):
+    def __init__(self, sheep_move_dist=0.5, wolf_move_dist=1.0, step=54, scale=1.0):
         self.step = step
+        self.scale = scale
         self.wolf = Wolf(wolf_move_dist * self.step)
         self.flock = []
         self.distances = []
@@ -24,6 +25,12 @@ class Simulation:
                 y)
         self.flock.append(sheep)
 
+    def update_scale(self, multiplier):
+        self.wolf.move_dist *= multiplier
+        for i in range(len(self.flock)):
+            self.flock[i].move_dist *= multiplier
+        self.scale *= multiplier
+
     def go_step(self):
         self.let_flock_flee()
         self.calculate_distances_between_wolf_and_flock()
@@ -37,6 +44,7 @@ class Simulation:
 
         self.turn += 1
         self.write_turn_result()
+        print(self.turn_result)
         self.results.append(self.turn_result)
 
 
@@ -69,8 +77,11 @@ class Simulation:
         return result
 
     def get_alive_sheep_amount(self):
-        alive_sheep_amount = len(self.flock) - self.get_eaten_sheep_amount()
-        return alive_sheep_amount
+        x = 0
+        for i in range(len(self.flock)):
+            if self.flock[i].is_alive:
+                x += 1
+        return x
 
     def get_eaten_sheep_amount(self):
         cnt = 0

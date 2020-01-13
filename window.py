@@ -7,6 +7,7 @@ from simulation import Simulation
 import configuration as cfg
 import numpy as np
 from animals import Wolf
+import time
 
 
 class Window():
@@ -37,6 +38,9 @@ class Window():
             cfg.config['wolf_color'] = colorStr
         self.update_animals()        
 
+    def handle_checkbox(self, text):
+        print(text)
+
     def settings(self):
         win = Toplevel()
         win.wm_title("Settings")
@@ -46,6 +50,14 @@ class Window():
         sheep_color.pack()
         sheep_color = Button(win, text='Wolf color', command=self.choose_wolf_color)
         sheep_color.pack()
+        self.speed = []
+        text = ['0.5', '1.0', '1.5', '2.0']
+        for i in range(4):
+            checkbox = Checkbutton(win, text=text[i], command=lambda: self.handle_checkbox(text[i]))
+            self.speed.append(checkbox)
+            self.speed[i].pack()
+            if self.speed[i]['text'] == '1.0':
+                self.speed[i].select()
 
     def sheep_color(self):
         win = Toplevel()
@@ -75,6 +87,26 @@ class Window():
             messagebox.showinfo('Brak owiec', 'Dodaj najpierw owce')  
         else:
             print('Osiągnięto końcową liczbę rund')
+    
+    def animating(self):
+        if self.running:
+            self.simulate()
+            self.update_animals()
+            self.window.update()
+        self.window.after(1000, self.animating)
+
+    def start_simulate(self):
+        if self.turn < cfg.config['rounds']-1 and self.simulation.get_alive_sheep_amount() != 0:
+            self.running = True
+            self.start_stop['text'] = 'Stop'
+            self.start_stop['command'] = self.stop_simulate
+            if not self.runned_before:
+                self.window.after(1000, self.animating)
+
+    def stop_simulate(self):
+        self.running = False
+        self.start_stop['text'] = 'Start'
+        self.start_stop['command'] = self.start_simulate
 
     def reset(self):
         self.simulation = Simulation(sheep_move_dist=cfg.config['sheep_move_dist'], wolf_move_dist=cfg.config['wolf_move_dist'])
@@ -147,13 +179,27 @@ class Window():
         self.simulation.wolf = Wolf(cfg.config['wolf_move_dist']*self.step, cfg.config['canvas_side']/2, cfg.config['canvas_side']/2)
         self.paint_animal(cfg.config['canvas_side']/2, cfg.config['canvas_side']/2, cfg.config['wolf_color'])
 
+    def update_dot_size(self, v):
+        self.dot_size *= v
+
+    def set_scale(self, v):
+        multiplier = self.scale / float(v)
+        self.update_dot_size(multiplier)
+        # self.simulation.update_scale()
+        self.update_animals()
+        self.scale = float(v)
+
 
     def config(self):
         self.turn = 0
-        self.dot_size = 10
+        self.running = False
+        self.runned_before = False
+        self.scale = 1.0
+        self.seconds = 1.0
+        self.dot_size = 54
         self.window.title(cfg.config['title'])
         self.window.geometry(cfg.config['resolution'])
-        self.step = cfg.config['canvas_side'] / (1.5 * cfg.config['init_pos_limit'])
+        self.step = (cfg.config['canvas_side'] / (1.5 * cfg.config['init_pos_limit']))
         self.simulation = Simulation(sheep_move_dist=cfg.config['sheep_move_dist'],
                             wolf_move_dist=cfg.config['wolf_move_dist'], step=self.step)
         menu = Menu(self.window)
@@ -179,6 +225,11 @@ class Window():
         reset_button.pack()
         button = Button(self.window, text='Settings', command=self.settings)
         button.pack()
+        self.start_stop = Button(self.window, text='Start', command=self.start_simulate)
+        self.start_stop.pack()
+        s = Scale(self.window, from_=0.5, to=2, orient=HORIZONTAL, length=200, showvalue=0, tickinterval=0.5, resolution=0.5)
+        s.set(1.0)
+        s.pack()
 
     def __init__(self):
         self.window = Tk()
