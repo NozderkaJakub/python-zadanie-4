@@ -27,25 +27,33 @@ class Simulation:
 
     def update_scale(self, multiplier):
         self.wolf.move_dist *= multiplier
+        self.wolf.pos_x *= multiplier
+        self.wolf.pos_y *= multiplier
         for i in range(len(self.flock)):
             self.flock[i].move_dist *= multiplier
+            self.flock[i].pos_x *= multiplier
+            self.flock[i].pos_y *= multiplier
         self.scale *= multiplier
+        self.step *= multiplier
 
     def go_step(self):
-        self.let_flock_flee()
-        self.calculate_distances_between_wolf_and_flock()
-        nearest_sheep = self.get_nearest_alive_sheep()
-        distance_from_nearest_sheep = nearest_sheep[1]
-        if (distance_from_nearest_sheep < self.wolf.move_dist):
-            self.let_wolf_eat(nearest_sheep[0])
-            self.alive_sheep_amount = self.get_alive_sheep_amount()
-        else:
-            self.let_wolf_chase(nearest_sheep)
+        if self.get_alive_sheep_amount() != 0:
+            self.let_flock_flee()
+            self.calculate_distances_between_wolf_and_flock()
+            nearest_sheep = self.get_nearest_alive_sheep()
+            distance_from_nearest_sheep = nearest_sheep[1]
+            if (distance_from_nearest_sheep < self.wolf.move_dist):
+                self.let_wolf_eat(nearest_sheep[0])
+                self.alive_sheep_amount = self.get_alive_sheep_amount()
+            else:
+                self.let_wolf_chase(nearest_sheep)
 
-        self.turn += 1
-        self.write_turn_result()
-        print(self.turn_result)
-        self.results.append(self.turn_result)
+            self.turn += 1
+            self.write_turn_result()
+            # print(self.turn_result)
+            self.results.append(self.turn_result)
+        else:
+            print("Baco, nie ma łowiecek")
 
 
     def let_flock_flee(self):
@@ -70,7 +78,10 @@ class Simulation:
 
     def get_nearest_alive_sheep(self):
         alive_sheep = [sheep for sheep in self.distances if sheep[0].is_alive]
-        return min(alive_sheep, key=lambda x: x[1])
+        if self.get_alive_sheep_amount() != 0:
+            return min(alive_sheep, key=lambda x: x[1])
+        else:
+            return None
 
     def is_any_alive_sheep(self):
         result = False if not self.get_alive_sheep_amount() else True

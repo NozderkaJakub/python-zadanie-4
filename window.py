@@ -7,6 +7,7 @@ from simulation import Simulation
 import configuration as cfg
 import numpy as np
 from animals import Wolf
+from animals import Sheep
 import time
 
 
@@ -39,7 +40,10 @@ class Window():
         self.update_animals()        
 
     def handle_checkbox(self, text):
-        print(text)
+        for checkbox in self.speed:
+            if checkbox['text'] != text:
+                checkbox.deselect()
+        self.seconds = float(text)
 
     def settings(self):
         win = Toplevel()
@@ -52,12 +56,16 @@ class Window():
         sheep_color.pack()
         self.speed = []
         text = ['0.5', '1.0', '1.5', '2.0']
-        for i in range(4):
-            checkbox = Checkbutton(win, text=text[i], command=lambda: self.handle_checkbox(text[i]))
-            self.speed.append(checkbox)
-            self.speed[i].pack()
-            if self.speed[i]['text'] == '1.0':
-                self.speed[i].select()
+        checkbox1 = Checkbutton(win, text=text[0], command=lambda: self.handle_checkbox(text[0]))
+        self.speed.append(checkbox1)
+        checkbox2 = Checkbutton(win, text=text[1], command=lambda: self.handle_checkbox(text[1]))
+        self.speed.append(checkbox2)
+        checkbox3 = Checkbutton(win, text=text[2], command=lambda: self.handle_checkbox(text[2]))
+        self.speed.append(checkbox3)
+        checkbox4 = Checkbutton(win, text=text[3], command=lambda: self.handle_checkbox(text[3]))
+        self.speed.append(checkbox4)
+        for checkbox in self.speed:
+            checkbox.pack()
 
     def sheep_color(self):
         win = Toplevel()
@@ -93,20 +101,25 @@ class Window():
             self.simulate()
             self.update_animals()
             self.window.update()
-        self.window.after(1000, self.animating)
+        self.window.after(int(self.seconds*1000), self.animating)
 
     def start_simulate(self):
         if self.turn < cfg.config['rounds']-1 and self.simulation.get_alive_sheep_amount() != 0:
             self.running = True
             self.start_stop['text'] = 'Stop'
             self.start_stop['command'] = self.stop_simulate
+            self.step_button['state'] = 'disabled'
+            self.reset_button['state'] = 'disabled'
             if not self.runned_before:
-                self.window.after(1000, self.animating)
+                self.window.after(int(self.seconds*1000), self.animating)
 
     def stop_simulate(self):
         self.running = False
+        self.runned_before = True
         self.start_stop['text'] = 'Start'
         self.start_stop['command'] = self.start_simulate
+        self.step_button['state'] = 'normal'
+        self.reset_button['state'] = 'normal'
 
     def reset(self):
         self.simulation = Simulation(sheep_move_dist=cfg.config['sheep_move_dist'], wolf_move_dist=cfg.config['wolf_move_dist'])
@@ -116,13 +129,17 @@ class Window():
         self.update_sheep_amount()
 
     def restore_game(self, result):
+        print(result)
         self.simulation = Simulation(sheep_move_dist=result['sheep_move_dist'], wolf_move_dist=result['wolf_move_dist'])
         self.simulation.turn = result['turn_no']
         self.simulation.wolf.pos_x = result['wolf_pos'][0]
         self.simulation.wolf.pos_y = result['wolf_pos'][1]
+        self.simulation.wolf.move_dist = result['wolf_move_dist']
         i = 0
         for sheep_pos in result['sheep_positions']:
             if sheep_pos is not None:
+                sheep = Sheep(result['sheep_move_dist'], i, 0, 0)
+                self.simulation.flock.append(sheep)
                 self.simulation.flock[i].pos_x = sheep_pos[0]
                 self.simulation.flock[i].pos_y = sheep_pos[1]
                 self.simulation.flock[i].is_alive = True
@@ -130,6 +147,7 @@ class Window():
                 self.simulation.flock[i].is_alive = False
             i += 1
         self.update_sheep_amount()
+        self.update_animals()
             
 
     def file_save(self):
@@ -174,6 +192,7 @@ class Window():
         self.simulation.add_sheep(event.x, event.y)
         self.paint_animal(event.x, event.y, cfg.config['sheep_color'])
         self.update_sheep_amount()
+        self.step_button['state'] = 'normal'
 
     def add_wolf(self):
         self.simulation.wolf = Wolf(cfg.config['wolf_move_dist']*self.step, cfg.config['canvas_side']/2, cfg.config['canvas_side']/2)
@@ -183,9 +202,9 @@ class Window():
         self.dot_size *= v
 
     def set_scale(self, v):
-        multiplier = self.scale / float(v)
+        multiplier = float(v) / self.scale
         self.update_dot_size(multiplier)
-        # self.simulation.update_scale()
+        self.simulation.update_scale(multiplier)
         self.update_animals()
         self.scale = float(v)
 
@@ -210,6 +229,7 @@ class Window():
         file_menu.add_separator()
         file_menu.add_command(label='Quit', command=self.quit)
         settings_menu = Menu(menu, tearoff=0)
+        settings_menu.add_command(label='Settings', command=self.settings)
         menu.add_cascade(label='File', menu=file_menu)
         menu.add_cascade(label='Settings', menu=settings_menu)
         self.window.config(menu=menu)
@@ -219,15 +239,14 @@ class Window():
         self.canvas = Canvas(self.window, width=cfg.config['canvas_side'], height=cfg.config['canvas_side'])
         self.canvas_setup()
         self.add_wolf()
-        step_button = Button(self.window, text='Step', command=self.simulate)
-        step_button.pack()
-        reset_button = Button(self.window, text='Reset', command=self.reset)
-        reset_button.pack()
-        button = Button(self.window, text='Settings', command=self.settings)
-        button.pack()
+        self.step_button = Button(self.window, text='Step', command=self.simulate)
+        self.step_button.pack()
+        self.step_button['state'] = 'disabled'
+        self.reset_button = Button(self.window, text='Reset', command=self.reset)
+        self.reset_button.pack()
         self.start_stop = Button(self.window, text='Start', command=self.start_simulate)
         self.start_stop.pack()
-        s = Scale(self.window, from_=0.5, to=2, orient=HORIZONTAL, length=200, showvalue=0, tickinterval=0.5, resolution=0.5)
+        s = Scale(self.window, from_=0.5, to=2, orient=HORIZONTAL, length=200, showvalue=0, tickinterval=0.5, resolution=0.5, command=self.set_scale)
         s.set(1.0)
         s.pack()
 
